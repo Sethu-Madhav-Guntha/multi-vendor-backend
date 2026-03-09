@@ -1,10 +1,10 @@
 {
   "name": "multi-vendor-backend",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Backend Application for Multi Vendor Product Project.",
   "homepage": "https://github.com/Sethu-Madhav-Guntha/multi-vendor-backend#readme",
   "bugs": {
-    "url": "https://github.com/Sethu-Madhav-Guntha/multi-vendor-backend/issues"
+    "url": "https://github.com/Sethu-Madhav-Guntha/multi-vendor-backend/"
   },
   "repository": {
     "type": "git",
@@ -12,12 +12,14 @@
   },
   "license": "ISC",
   "author": "Sethu Madhav Guntha",
-  "type": "commonjs",
+  "type": "module",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
     "express": "^5.2.1"
   }
 }
