@@ -1,6 +1,11 @@
 # multi-vendor-backend
 Backend Application Code for Multi-Vendor Web Application.
-Current version 1.2.1
+Installed jsonwebtoken library for generating token on successful register and login.
+Added Error Handler function, incase of errors this function handles.
+Current version 1.2.2
+------------------------------------------------------
+Emptied the .env file
+at this version 1.2.1
 ------------------------------------------------------
 Added mongo database configuration on installing mongoose library.
 Added User model on having blueprint for User Data.

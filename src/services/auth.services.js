@@ -1,26 +1,38 @@
 import bcrypt from "bcryptjs";
 import User from "../models/user.model.js";
-
-export const isUserRegistered = async (email) => {
-    const foundUser = await User.findOne({ email });
-    console.log(foundUser);
-    return foundUser;
-}
+import jwt from "jsonwebtoken";
 
 export const registerUser = async (userDetails) => {
-    const generateSalt = await bcrypt.genSalt(10);
-    const userHashedPassword = await bcrypt.hash(userDetails.password, generateSalt);
-    userDetails.password = userHashedPassword;
-    // console.log(userDetails.password);
-    return await User.create(userDetails);
-}
+  const existingUser = await User.findOne({ email: userDetails.email });
+  if (existingUser) {
+    return { status: "already_exists", user: null };
+  }
 
-export const checkUserCredentials = async (credentials) => {
-    const isUser = await isUserRegistered(credentials.email);
-    if (!isUser) {
-        return null;
-    }
-    const isPwdMatched = await bcrypt.compare(credentials.password, isUser.password);
-    // console.log(isPwdMatched);
-    return isPwdMatched;
-} 
+  const generateSalt = await bcrypt.genSalt(10);
+  const hashedPassword = await bcrypt.hash(userDetails.password, generateSalt);
+
+  const newUser = await User.create({ ...userDetails, password: hashedPassword });
+  return { status: "success", user: newUser };
+};
+
+export const checkUserCredentials = async (email, password) => {
+  const user = await User.findOne({ email });
+  if (!user) {
+    return { status: "not_found", user: null };
+  }
+
+  const isPwdMatched = await bcrypt.compare(password, user.password);
+  if (!isPwdMatched) {
+    return { status: "invalid_password", user: null };
+  }
+
+  return { status: "success", user };
+};
+
+export const tokenGeneration = (userId, role) => {
+  return jwt.sign(
+    { userId, role },
+    process.env.JWT_SECRET,
+    { expiresIn: "1h" }
+  );
+}

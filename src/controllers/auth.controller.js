@@ -1,71 +1,60 @@
-import { isUserRegistered, registerUser, checkUserCredentials } from "../services/auth.services.js";
+import { registerUser, checkUserCredentials, tokenGeneration } from "../services/auth.services.js";
+import { sendResponse } from "../utils/response.js";
 
-export const loginUser = async (req, res) => {
-    // console.log("At login controller: \n", req.body);
-    const isExistingUser = await isUserRegistered(req.body.email);
-    if (!isExistingUser) {
-        return res
-            .status(401)
-            .json({
-                success: false,
-                message: "User Doesn't Exists.",
-                redirect: "/signup",
-                prefillData: {
-                    email: req.body.email
-                }
-            });
-    }
-    const isValidCredentials = await checkUserCredentials(req.body);
-    if (!isValidCredentials) {
-        return res
-            .status(401)
-            .json({
-                success: false,
-                message: "Invalid credentials"
-            });
-    }
-    res
-    .status(200)
-    .json({
-    success: true,
-    message: "Login successful",
-    user: {
-      id: isExistingUser._id,
-      username: isExistingUser.username,
-      email: isExistingUser.email,
-      role: isExistingUser.role
-    }
-  });
-}
+export const loginUser = async (req, res, next) => {
+    try {
+        const { email, password } = req.body;
+        const { status, user } = await checkUserCredentials(email, password);
 
-export const signupUser = async (req, res) => {
-    // console.log("At Signup controller: \n", req.body);
-    const isExistingUser = await isUserRegistered(req.body.email);
-    if (isExistingUser) {
-        return res
-            .status(409)
-            .json({
-                success: false,
-                message: "User Account Exists.",
-                redirect: "/login",
-                prefillData: {
-                    email: req.body.email
-                }
-            });
-    }
-    const result = await registerUser(req.body);
-    // console.log(result);
-    return res
-        .status(201)
-        .json({
-            success: true,
-            message: "User Registered Successfully.",
+        if (status === "not_found") {
+            return sendResponse(res, 401, false, "User Email Doesn't Exist. Please register.", { redirect: "/signup", prefillData: { email } });
+        }
+
+        if (status === "invalid_password") {
+            return sendResponse(res, 401, false, "Invalid Credentials. Please try again.", { prefillData: { email } })
+        }
+
+        const token = tokenGeneration(user._id, user.role);
+        return sendResponse(res, 200, true, "Login Successful.", {
             redirect: "/",
+            token,
             user: {
-                userId: result._id,
-                username: result.username,
-                email: result.email,
-                role: result.role
+                userId: user._id,
+                username: user.username,
+                email: user.email,
+                role: user.role
             }
         });
-}
+    } catch (err) {
+        next(err);
+    }
+};
+
+export const signupUser = async (req, res, next) => {
+    try {
+        const { status, user } = await registerUser(req.body);
+
+        if (status === "already_exists") {
+            return sendResponse(res, 409, false, "User Email Account Exists. Please login.", {
+                redirect: "/login",
+                prefillData: { email: req.body.email }
+            });
+        }
+
+        if (status === "success") {
+            const token = tokenGeneration(user._id, user.role);
+            return sendResponse(res, 201, true, "User Registered Successfully.", {
+                redirect: "/",
+                token,
+                user: {
+                    userId: user._id,
+                    username: user.username,
+                    email: user.email,
+                    role: user.role
+                }
+            });
+        }
+    } catch (err) {
+        next(err);
+    }
+};
