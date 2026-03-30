@@ -1,8 +1,12 @@
 # multi-vendor-backend
 Backend Application Code for Multi-Vendor Web Application.
+Implemented Product Module for creating, updating and deleting products if the user is a vendor of that particular store.
+Also implemented fetching products irrespective of the user authentication.
+Current version 3.0.0
+------------------------------------------------------
 Implemented Store Module for creating, updating and deleting stores if the user is a vendor.
 To update, delete or fetch details of the store, only particular vendor who created the store can be able to operate these functionalities.
-Current version 2.0.0
+at this version 2.0.0
 ------------------------------------------------------
 Installed jsonwebtoken library for generating token on successful register and login.
 Added Error Handler function, incase of errors this function handles.
