@@ -1,0 +1,113 @@
+import Cart from "../models/cart.model.js";
+import Product from "../models/product.model.js";
+// import Order from "../models/order.model.js"; // Order schema will be defined separately
+import { sendResponse } from "../utils/response.js";
+
+// Utility: calculate total
+const calculateTotal = (items) =>
+    items.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+
+// Get Cart
+export const getCart = async (req, res, next) => {
+    try {
+        const cart = await Cart.findOne({ user: req.user.userId }).populate("items.product");
+        if (!cart) return sendResponse(res, 200, true, "Cart is empty", { items: [] });
+
+        const totalAmount = calculateTotal(cart.items);
+        sendResponse(res, 200, true, "Cart Fetched Successfully.", { cart, totalAmount });
+    } catch (err) {
+        next(err);
+    }
+};
+
+// Add to Cart
+export const addToCart = async (req, res, next) => {
+    try {
+        const { productId, quantity } = req.body;
+        const product = await Product.findById(productId);
+        if (!product) return sendResponse(res, 404, false, `${productId} Product not Found.`);
+        if (product.quantity < quantity) return sendResponse(res, 400, false, `${productId} Insufficient Stock.`);
+
+        let cart = await Cart.findOne({ user: req.user.userId });
+        if (!cart) cart = new Cart({ user: req.user.userId, items: [] });
+
+        const existingItem = cart.items.find(item => item.product.toString() === productId);
+        if (existingItem) {
+            existingItem.quantity += quantity;
+        } else {
+            cart.items.push({ product: productId, quantity });
+        }
+
+        await cart.save();
+        sendResponse(res, 200, true, `${productId} Product added to Cart Successfully.`, { cart });
+    } catch (err) {
+        next(err);
+    }
+};
+
+// Remove from Cart
+export const removeFromCart = async (req, res, next) => {
+    try {
+        const cart = await Cart.findOne({ user: req.user.userId });
+        if (!cart) return sendResponse(res, 200, true, "Cart is Empty.", { items: [] });
+
+        cart.items = cart.items.filter(item => item.product.toString() !== req.params.productId);
+        await cart.save();
+
+        sendResponse(res, 200, true, `${req.params.productId} Product removed from Cart.`, { cart });
+    } catch (err) {
+        next(err);
+    }
+};
+
+// Clear Cart
+export const clearCart = async (req, res, next) => {
+    try {
+        const cart = await Cart.findOne({ user: req.user.userId });
+        if (!cart) return sendResponse(res, 200, true, `Cart is already Empty.`, { items: [] });
+
+        cart.items = [];
+        await cart.save();
+
+        sendResponse(res, 200, true, "Cart Cleared Successfully.");
+    } catch (err) {
+        next(err);
+    }
+};
+
+// Update Cart Item (increment/decrement quantity)
+export const updateCartItem = async (req, res, next) => {
+    try {
+        const { productId, quantityChange } = req.body; // e.g. -1 or +1
+
+        if (typeof quantityChange !== "number" || isNaN(quantityChange)) {
+            return sendResponse(res, 400, false, "Invalid quantityChange value");
+        }
+
+        const cart = await Cart.findOne({ user: req.user.userId });
+        if (!cart) return sendResponse(res, 200, true, "Cart is Empty.", { items: [] });
+
+        const item = cart.items.find(i => i.product.toString() === productId);
+        if (!item) return sendResponse(res, 404, false, `${productId} Product not found in Cart.`);
+
+        item.quantity += quantityChange;
+
+        if (item.quantity <= 0) {
+            cart.items = cart.items.filter(i => i.product.toString() !== productId);
+        }
+
+        await cart.save();
+        sendResponse(res, 200, true, "Cart updated successfully", { cart });
+    } catch (err) {
+        next(err);
+    }
+};
+
+// Checkout Cart
+export const checkoutCart = async (req, res, next) => {
+    try {
+        // TODO: Order the cart items.  
+    } catch (err) {
+        next(err);
+    }
+};

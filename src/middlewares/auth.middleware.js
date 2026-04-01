@@ -34,3 +34,13 @@ export const isVendor = (req, res, next) => {
         next();
     });
 };
+
+export const isCustomer = (req, res, next) => {
+    validateToken(req, res, (err) => {
+        if (err) return next(err);
+        if (req.user.role !== "User") {
+            return sendResponse(res, 403, false, "Accessible only for Customers.");
+        }
+        next();
+    });
+};

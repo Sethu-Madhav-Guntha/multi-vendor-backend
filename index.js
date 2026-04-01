@@ -2,12 +2,13 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 
-import authRouter from "./src/routes/auth.routes.js";
+import authRouter from "./src/routes/auth.route.js";
 import storeRouter from "./src/routes/store.route.js";
 import productRouter from "./src/routes/product.route.js";
+import cartRouter from "./src/routes/cart.route.js";
 import connectDB from "./src/config/db.js";
 import { errorHandler } from "./src/middlewares/err.middleware.js";
-import { isVendor } from "./src/middlewares/auth.middleware.js";
+import { isCustomer, isVendor } from "./src/middlewares/auth.middleware.js";
 
 const app = express();
 app.use(cors());
@@ -20,6 +21,7 @@ const PORT = process.env.PORT;
 app.use("/auth", authRouter);
 app.use("/stores", isVendor, storeRouter);
 app.use("/products", productRouter);
+app.use("/cart", isCustomer, cartRouter);
 
 app.use(errorHandler);
 

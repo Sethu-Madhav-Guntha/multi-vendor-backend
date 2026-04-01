@@ -4,15 +4,15 @@ export function errorHandler(err, req, res, next) {
   // Mongoose validation errors (e.g., regex, required, minlength)
   if (err.name === "ValidationError") {
     const messages = Object.values(err.errors).map(val => val.message);
-    return sendResponse(res, 400, false, messages.join(", "));
+    return sendResponse(res, 400, false, messages.join(`, ${err.message}`));
   }
 
   // MongoDB duplicate key error (e.g., unique email)
   if (err.code === 11000) {
     const field = Object.keys(err.keyValue)[0];
-    return sendResponse(res, 409, false, `${field} already exists. Please use a different ${field}.`);
+    return sendResponse(res, 409, false, `${field} already exists. Please use a different ${field}. ${err.message}`);
   }
 
   // Fallback for other errors
-  return sendResponse(res, 500, false, "Something went wrong. Please try again later.");
+  return sendResponse(res, 500, false, `${err.message}`);
 };
