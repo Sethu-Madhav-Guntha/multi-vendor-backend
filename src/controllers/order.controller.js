@@ -1,0 +1,146 @@
+import Order from "../models/order.model.js";
+import Product from "../models/product.model.js";
+import Store from "../models/store.model.js"; // assuming you have a Store model
+import { sendResponse } from "../utils/response.js";
+
+// Customer: Create Order (split per store)
+export const createOrder = async (req, res, next) => {
+  try {
+    const { items } = req.body; // array of { productId, quantity }
+    if (!items || items.length === 0) return sendResponse(res, 400, false, "No items provided to Order.");
+
+    // Group items by store
+    const storeGroups = {};
+    for (const { productId, quantity } of items) {
+      const product = await Product.findById(productId);
+      if (!product) return sendResponse(res, 404, false, `Product ${productId} not found`);
+      if (product.quantity < quantity) return sendResponse(res, 400, false, `Insufficient stock for ${product.productName}`);
+
+      product.quantity -= quantity;
+      await product.save();
+
+      if (!storeGroups[product.store]) storeGroups[product.store] = [];
+      storeGroups[product.store].push({ product, quantity });
+    }
+
+    // Create separate orders per store
+    const createdOrders = [];
+    for (const storeId of Object.keys(storeGroups)) {
+      const orderItems = storeGroups[storeId].map(i => ({
+        product: i.product._id,
+        quantity: i.quantity,
+        price: i.product.price
+      }));
+
+      const totalAmount = orderItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
+
+      const order = await Order.create({
+        user: req.user.userId,
+        items: orderItems,
+        store: storeId,
+        totalAmount,
+        status: "Pending"
+      });
+
+      createdOrders.push(order);
+    }
+
+    sendResponse(res, 201, true, "Orders Created Successfully.", { orders: createdOrders });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Customer: Edit Order (Pending only)
+export const editOrder = async (req, res, next) => {
+  try {
+    const order = await Order.findOne({ _id: req.params.orderId, user: req.user.userId });
+    if (!order) return sendResponse(res, 404, false, "Order not found");
+    if (order.status !== "Pending") return sendResponse(res, 400, false, "Only Pending orders can be edited");
+
+    const { items } = req.body;
+    order.items = items;
+    order.totalAmount = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+
+    await order.save();
+    sendResponse(res, 200, true, "Order updated successfully", { order });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Customer: Delete Order (Pending only)
+export const deleteOrder = async (req, res, next) => {
+  try {
+    const order = await Order.findOne({ _id: req.params.orderId, user: req.user.userId });
+    if (!order) return sendResponse(res, 404, false, "Order not found");
+    if (order.status !== "Pending") return sendResponse(res, 400, false, "Only Pending orders can be deleted");
+
+    await order.deleteOne();
+    sendResponse(res, 200, true, "Order deleted successfully");
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Customer: Get Order by ID
+export const getOrderById = async (req, res, next) => {
+  try {
+    const order = await Order.findOne({ _id: req.params.orderId, user: req.user.userId }).populate("items.product");
+    if (!order) return sendResponse(res, 404, false, "Order not found");
+
+    sendResponse(res, 200, true, "Order fetched successfully", { order });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Customer: List Orders
+export const listCustomerOrders = async (req, res, next) => {
+  try {
+    const orders = await Order.find({ user: req.user.userId }).populate("items.product");
+    sendResponse(res, 200, true, "Orders fetched successfully", { orders });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Vendor: List Store Orders
+export const listVendorStoreOrders = async (req, res, next) => {
+  try {
+    const { storeId } = req.params;
+    const orders = await Order.find({ store: storeId }).populate("items.product");
+    sendResponse(res, 200, true, "Store orders fetched successfully", { orders });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Vendor: List All Orders across Vendor's stores
+export const listVendorOrders = async (req, res, next) => {
+  try {
+    const stores = await Store.find({ owner: req.user.userId }).select("_id");
+    const storeIds = stores.map(s => s._id);
+
+    const orders = await Order.find({ store: { $in: storeIds } }).populate("items.product");
+    sendResponse(res, 200, true, "Vendor orders fetched successfully", { orders });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Vendor: Update Order Status
+export const updateOrderStatus = async (req, res, next) => {
+  try {
+    const { status } = req.body;
+    const order = await Order.findById(req.params.orderId);
+    if (!order) return sendResponse(res, 404, false, "Order not found");
+
+    order.status = status;
+    await order.save();
+
+    sendResponse(res, 200, true, "Order status updated successfully", { order });
+  } catch (err) {
+    next(err);
+  }
+};
