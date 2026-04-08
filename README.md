@@ -1,9 +1,12 @@
 # multi-vendor-backend
 Backend Application Code for Multi-Vendor Web Application.
+Implemented fetch user details function.
+Current version 4.0.1
+------------------------------------------------------
 Implemented Order Module for creating, edit or remove Order by Customer.
 Vendor can update the order either deliver or cancell the order.
 Need to test the Order API Calls.
-Current version 4.0.0
+at this version 4.0.0
 ------------------------------------------------------
 Implemented Product Module for creating, updating and deleting products if the user is a vendor of that particular store.
 Also implemented fetching products irrespective of the user authentication.

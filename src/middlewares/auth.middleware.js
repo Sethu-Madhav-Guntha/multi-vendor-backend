@@ -1,7 +1,8 @@
 import jwt from "jsonwebtoken";
 import { sendResponse } from "../utils/response.js";
+import userModel from "../models/user.model.js";
 
-export const validateToken = (req, res, next) => {
+export const validateToken = async (req, res, next) => {
     try {
         const authHeader = req.headers.authorization;
         if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -14,8 +15,11 @@ export const validateToken = (req, res, next) => {
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
+        const userDetails = await userModel.findOne({ _id: decoded.userId });
         req.user = {
             userId: decoded.userId,
+            username: userDetails.username,
+            email: userDetails.email,
             role: decoded.role
         };
 

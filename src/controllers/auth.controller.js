@@ -58,3 +58,11 @@ export const signupUser = async (req, res, next) => {
         next(err);
     }
 };
+
+export const getUserDetails = async (req, res, next) => {
+    try {
+        return sendResponse(res, 200, true, "Fetched User Details Successfully.", { user: req.user });
+    } catch (err) {
+        next(err);
+    }
+}

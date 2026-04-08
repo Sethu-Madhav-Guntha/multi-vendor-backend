@@ -59,11 +59,34 @@ export const editOrder = async (req, res, next) => {
     if (order.status !== "Pending") return sendResponse(res, 400, false, "Only Pending orders can be edited");
 
     const { items } = req.body;
-    order.items = items;
-    order.totalAmount = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+    if (!items || items.length === 0) {
+      return sendResponse(res, 400, false, "No items provided");
+    }
+
+    let updatedItems = [];
+    let totalAmount = 0;
+
+    for (const { productId, quantity } of items) {
+      const product = await Product.findById(productId);
+      if (!product) return sendResponse(res, 404, false, `Product ${productId} not found`);
+      if (product.quantity < quantity) {
+        return sendResponse(res, 400, false, `Insufficient stock for ${product.productName}`);
+      }
+
+      updatedItems.push({
+        product: product._id,
+        quantity,
+        price: product.price
+      });
+
+      totalAmount += product.price * quantity;
+    }
+
+    order.items = updatedItems;
+    order.totalAmount = totalAmount;
 
     await order.save();
-    sendResponse(res, 200, true, "Order updated successfully", { order });
+    sendResponse(res, 200, true, "Order edited successfully", { order });
   } catch (err) {
     next(err);
   }
@@ -77,7 +100,7 @@ export const deleteOrder = async (req, res, next) => {
     if (order.status !== "Pending") return sendResponse(res, 400, false, "Only Pending orders can be deleted");
 
     await order.deleteOne();
-    sendResponse(res, 200, true, "Order deleted successfully");
+    res.status(204).end();
   } catch (err) {
     next(err);
   }
