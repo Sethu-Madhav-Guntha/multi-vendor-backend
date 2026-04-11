@@ -21,29 +21,29 @@ export const createStore = async (req, res, next) => {
 };
 
 export const updateStore = async (req, res, next) => {
-  try {
-    req.store.storeName = req.body.storeName || req.store.storeName;
-    req.store.description = req.body.description || req.store.description;
-    const updatedStore = await req.store.save();
-    sendResponse(res, 200, true, `Store By ID: ${req.store._id} Updated Successfully.`, { store: updatedStore });
-  } catch (err) {
-    next(err);
-  }
+    try {
+        req.store.storeName = req.body.storeName || req.store.storeName;
+        req.store.description = req.body.description || req.store.description;
+        const updatedStore = await req.store.save();
+        sendResponse(res, 200, true, `Store By ID: ${req.store._id} Updated Successfully.`, { store: updatedStore });
+    } catch (err) {
+        next(err);
+    }
 };
 
 export const deleteStore = async (req, res, next) => {
-  try {
-    await req.store.deleteOne();
-    res.status(204).end(); // no body for 204
-  } catch (err) {
-    next(err);
-  }
+    try {
+        await req.store.deleteOne();
+        res.status(204).end(); // no body for 204
+    } catch (err) {
+        next(err);
+    }
 };
 
 // 4. Get Store by ID
 export const getStoreById = async (req, res, next) => {
     try {
-        const store = await Store.findById(req.params.storeId);
+        const store = await Store.findById(req.params.storeId).populate("products");
         if (!store) return sendResponse(res, 404, false, "Store Not Found.");
         sendResponse(res, 200, true, `Store By ID: ${req.params.storeId} Fetched Successfully.`, { store });
     } catch (err) {

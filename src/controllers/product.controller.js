@@ -19,6 +19,13 @@ export const createProduct = async (req, res, next) => {
       store: store._id
     });
 
+    // ✅ Update store's products array
+    await Store.findByIdAndUpdate(
+      store._id,
+      { $push: { products: product._id } },
+      { new: true }
+    );
+
     sendResponse(res, 201, true, `${product._id} Product Created Successfully.`, { product });
   } catch (err) {
     next(err);
@@ -32,7 +39,7 @@ export const updateProduct = async (req, res, next) => {
     req.product.description = req.body.description || req.product.description;
     req.product.price = req.body.price || req.product.price;
     req.product.quantity = req.body.quantity || req.product.quantity;
-    req.product.productImageUrl = req.body.productImageUrl || req.product.productImageUrl; 
+    req.product.productImageUrl = req.body.productImageUrl || req.product.productImageUrl;
 
     const updatedProduct = await req.product.save();
     sendResponse(res, 200, true, `${req.params.productId} Product Updated Successfully.`, { product: updatedProduct });
@@ -44,6 +51,14 @@ export const updateProduct = async (req, res, next) => {
 // Delete Product
 export const deleteProduct = async (req, res, next) => {
   try {
+    // ✅ Remove product reference from store
+    await Store.findByIdAndUpdate(
+      req.product.store,
+      { $pull: { products: req.product._id } },
+      { new: true }
+    );
+
+    // ✅ Delete the product itself
     await req.product.deleteOne();
     res.status(204).end(); // no body for 204
   } catch (err) {
