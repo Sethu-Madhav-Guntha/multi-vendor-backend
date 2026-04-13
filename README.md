@@ -1,7 +1,10 @@
 # multi-vendor-backend
 Backend Application Code for Multi-Vendor Web Application.
+Altered Cart Functionalities on Decreasing or Removing Product. 
+Current Version 4.0.3
+------------------------------------------------------
 Implemented Product Details while fetching Store Details.
-Current Version 4.0.2
+at this Version 4.0.2
 ------------------------------------------------------
 Implemented fetch user details function.
 at this version 4.0.1

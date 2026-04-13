@@ -45,16 +45,29 @@ export const addToCart = async (req, res, next) => {
     }
 };
 
-// Remove from Cart
+// Remove or Decrement Cart Item
 export const removeFromCart = async (req, res, next) => {
     try {
+        const { productId } = req.params;
+        const { removeAll } = req.body; // ✅ optional flag
+
         const cart = await Cart.findOne({ user: req.user.userId });
         if (!cart) return sendResponse(res, 200, true, "Cart is Empty.", { items: [] });
 
-        cart.items = cart.items.filter(item => item.product.toString() !== req.params.productId);
-        await cart.save();
+        const item = cart.items.find(i => i.product.toString() === productId);
+        if (!item) return sendResponse(res, 404, false, `${productId} Product not found in Cart.`);
+        if (removeAll) {
+            cart.items = cart.items.filter(i => i.product.toString() !== productId);
+        } else {
+            if (item.quantity > 1) {
+                item.quantity -= 1;
+            } else {
+                cart.items = cart.items.filter(i => i.product.toString() !== productId);
+            }
+        }
 
-        sendResponse(res, 200, true, `${req.params.productId} Product removed from Cart.`, { cart });
+        await cart.save();
+        sendResponse(res, 200, true, "Cart updated successfully", { cart });
     } catch (err) {
         next(err);
     }
@@ -70,34 +83,6 @@ export const clearCart = async (req, res, next) => {
         await cart.save();
 
         sendResponse(res, 200, true, "Cart Cleared Successfully.");
-    } catch (err) {
-        next(err);
-    }
-};
-
-// Update Cart Item (increment/decrement quantity)
-export const updateCartItem = async (req, res, next) => {
-    try {
-        const { productId, quantityChange } = req.body; // e.g. -1 or +1
-
-        if (typeof quantityChange !== "number" || isNaN(quantityChange)) {
-            return sendResponse(res, 400, false, "Invalid quantityChange value");
-        }
-
-        const cart = await Cart.findOne({ user: req.user.userId });
-        if (!cart) return sendResponse(res, 200, true, "Cart is Empty.", { items: [] });
-
-        const item = cart.items.find(i => i.product.toString() === productId);
-        if (!item) return sendResponse(res, 404, false, `${productId} Product not found in Cart.`);
-
-        item.quantity += quantityChange;
-
-        if (item.quantity <= 0) {
-            cart.items = cart.items.filter(i => i.product.toString() !== productId);
-        }
-
-        await cart.save();
-        sendResponse(res, 200, true, "Cart updated successfully", { cart });
     } catch (err) {
         next(err);
     }
