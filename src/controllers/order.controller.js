@@ -106,7 +106,7 @@ export const deleteOrder = async (req, res, next) => {
   }
 };
 
-// Customer: Get Order by ID
+// Customer & Vendor: Get Order by ID
 export const getOrderById = async (req, res, next) => {
   try {
     const order = await Order.findOne({ _id: req.params.orderId, user: req.user.userId }).populate("items.product");
@@ -121,7 +121,7 @@ export const getOrderById = async (req, res, next) => {
 // Customer: List Orders
 export const listCustomerOrders = async (req, res, next) => {
   try {
-    const orders = await Order.find({ user: req.user.userId }).populate("items.product");
+    const orders = await Order.find({ user: req.user.userId }).populate("items.product").populate("store");
     sendResponse(res, 200, true, "Orders fetched successfully", { orders });
   } catch (err) {
     next(err);
@@ -129,10 +129,10 @@ export const listCustomerOrders = async (req, res, next) => {
 };
 
 // Vendor: List Store Orders
-export const listVendorStoreOrders = async (req, res, next) => {
+export const listStoreOrders = async (req, res, next) => {
   try {
     const { storeId } = req.params;
-    const orders = await Order.find({ store: storeId }).populate("items.product");
+    const orders = await Order.find({ store: storeId }).populate("items.product").populate("store").populate("user");
     sendResponse(res, 200, true, "Store orders fetched successfully", { orders });
   } catch (err) {
     next(err);
@@ -145,7 +145,7 @@ export const listVendorOrders = async (req, res, next) => {
     const stores = await Store.find({ owner: req.user.userId }).select("_id");
     const storeIds = stores.map(s => s._id);
 
-    const orders = await Order.find({ store: { $in: storeIds } }).populate("items.product");
+    const orders = await Order.find({ store: { $in: storeIds } }).populate("items.product").populate("store").populate("user");
     sendResponse(res, 200, true, "Vendor orders fetched successfully", { orders });
   } catch (err) {
     next(err);

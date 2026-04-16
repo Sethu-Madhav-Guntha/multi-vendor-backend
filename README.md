@@ -1,7 +1,12 @@
 # multi-vendor-backend
 Backend Application Code for Multi-Vendor Web Application.
+Altered Orders Routes, modified dev script at package.json.
+Populated Store and User details at Store & Vendor Order APIs.
+Altered Canceled option at Status Enum in Order model.
+Current Version 4.0.4
+------------------------------------------------------
 Altered Cart Functionalities on Decreasing or Removing Product. 
-Current Version 4.0.3
+at this Version 4.0.3
 ------------------------------------------------------
 Implemented Product Details while fetching Store Details.
 at this Version 4.0.2

@@ -5,7 +5,7 @@ import {
   deleteOrder,
   getOrderById,
   listCustomerOrders,
-  listVendorStoreOrders,
+  listStoreOrders,
   listVendorOrders,
   updateOrderStatus
 } from "../controllers/order.controller.js";
@@ -14,15 +14,17 @@ import { isCustomer, isVendor } from "../middlewares/auth.middleware.js";
 const router = Router();
 
 // Customer routes
-router.post("/create", isCustomer, createOrder);
-router.put("/edit/:orderId", isCustomer, editOrder);
-router.delete("/delete/:orderId", isCustomer, deleteOrder);
-router.get("/:orderId", isCustomer, getOrderById);
-router.get("/", isCustomer, listCustomerOrders);
+router.post("/customer/create", isCustomer, createOrder);
+router.get("/customer", isCustomer, listCustomerOrders);
+router.put("/customer/:orderId", isCustomer, editOrder);
+router.delete("/customer/:orderId", isCustomer, deleteOrder);
 
 // Vendor routes
-router.get("/vendor/store/:storeId", isVendor, listVendorStoreOrders);
 router.get("/vendor", isVendor, listVendorOrders);
-router.put("/status/:orderId", isVendor, updateOrderStatus);
+router.get("/store/:storeId", isVendor, listStoreOrders);
+router.put("/vendor/:orderId", isVendor, updateOrderStatus);
+
+// Both Customer and Vendor routes
+router.get("/:orderId", getOrderById);
 
 export default router;
