@@ -1,9 +1,23 @@
 # multi-vendor-backend
 Backend Application Code for Multi-Vendor Web Application.
+Added Profile Image, Gender fields at User model.
+Altered user object at validateToken middleware functionality at authMiddleware.
+Altered user object at Login & Signup functionalities at authController.
+Added Store Image, Store Discount fields at Store model.
+On deleting Store, the Store related Products are also gets deleted.
+Altered store object at Creation & Updation at Store controller.
+Altered product object at Creation & Updation at Product controller.
+Modified price to selling price at calculating the cart items price.
+Populated Store details of the Product at get cart items functionality.
+Modified Selling Price to the Order functionality. 
+Populated Store details of the Product at Order functionalities.
+Added Selling Price virtual field and Product Discount field at Product model.
+Current Version 4.0.5
+------------------------------------------------------
 Altered Orders Routes, modified dev script at package.json.
 Populated Store and User details at Store & Vendor Order APIs.
 Altered Canceled option at Status Enum in Order model.
-Current Version 4.0.4
+at this Version 4.0.4
 ------------------------------------------------------
 Altered Cart Functionalities on Decreasing or Removing Product. 
 at this Version 4.0.3

@@ -22,7 +22,9 @@ export const loginUser = async (req, res, next) => {
                 userId: user._id,
                 username: user.username,
                 email: user.email,
-                role: user.role
+                role: user.role,
+                gender: user.gender,
+                profileImg: user.profileImg
             }
         });
     } catch (err) {
@@ -50,7 +52,9 @@ export const signupUser = async (req, res, next) => {
                     userId: user._id,
                     username: user.username,
                     email: user.email,
-                    role: user.role
+                    role: user.role,
+                    gender: user.gender,
+                    profileImg: user.profileImg
                 }
             });
         }

@@ -12,7 +12,7 @@ export const createOrder = async (req, res, next) => {
     // Group items by store
     const storeGroups = {};
     for (const { productId, quantity } of items) {
-      const product = await Product.findById(productId);
+      const product = await Product.findById(productId).populate("store");
       if (!product) return sendResponse(res, 404, false, `Product ${productId} not found`);
       if (product.quantity < quantity) return sendResponse(res, 400, false, `Insufficient stock for ${product.productName}`);
 
@@ -29,10 +29,10 @@ export const createOrder = async (req, res, next) => {
       const orderItems = storeGroups[storeId].map(i => ({
         product: i.product._id,
         quantity: i.quantity,
-        price: i.product.price
+        sellingPrice: i.product.sellingPrice
       }));
 
-      const totalAmount = orderItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
+      const totalAmount = orderItems.reduce((sum, i) => sum + i.sellingPrice * i.quantity, 0);
 
       const order = await Order.create({
         user: req.user.userId,
@@ -67,7 +67,7 @@ export const editOrder = async (req, res, next) => {
     let totalAmount = 0;
 
     for (const { productId, quantity } of items) {
-      const product = await Product.findById(productId);
+      const product = await Product.findById(productId).populate("store");
       if (!product) return sendResponse(res, 404, false, `Product ${productId} not found`);
       if (product.quantity < quantity) {
         return sendResponse(res, 400, false, `Insufficient stock for ${product.productName}`);
@@ -76,10 +76,10 @@ export const editOrder = async (req, res, next) => {
       updatedItems.push({
         product: product._id,
         quantity,
-        price: product.price
+        sellingPrice: product.sellingPrice
       });
 
-      totalAmount += product.price * quantity;
+      totalAmount += product.sellingPrice * quantity;
     }
 
     order.items = updatedItems;
@@ -109,7 +109,7 @@ export const deleteOrder = async (req, res, next) => {
 // Customer & Vendor: Get Order by ID
 export const getOrderById = async (req, res, next) => {
   try {
-    const order = await Order.findOne({ _id: req.params.orderId, user: req.user.userId }).populate("items.product");
+    const order = await Order.findOne({ _id: req.params.orderId, user: req.user.userId }).populate("items.product").populate("items.product.store");
     if (!order) return sendResponse(res, 404, false, "Order not found");
 
     sendResponse(res, 200, true, "Order fetched successfully", { order });

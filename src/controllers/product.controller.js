@@ -16,6 +16,7 @@ export const createProduct = async (req, res, next) => {
       price: req.body.price,
       quantity: req.body.quantity,
       productImageUrl: req.body.productImageUrl, // ✅ new field
+      productDiscount: req.body.productDiscount,
       store: store._id
     });
 
@@ -40,6 +41,7 @@ export const updateProduct = async (req, res, next) => {
     req.product.price = req.body.price || req.product.price;
     req.product.quantity = req.body.quantity || req.product.quantity;
     req.product.productImageUrl = req.body.productImageUrl || req.product.productImageUrl;
+    req.product.productDiscount = req.body.productDiscount || req.product.productDiscount;
 
     const updatedProduct = await req.product.save();
     sendResponse(res, 200, true, `${req.params.productId} Product Updated Successfully.`, { product: updatedProduct });

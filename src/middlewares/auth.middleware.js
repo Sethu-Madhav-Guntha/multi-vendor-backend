@@ -20,7 +20,9 @@ export const validateToken = async (req, res, next) => {
             userId: decoded.userId,
             username: userDetails.username,
             email: userDetails.email,
-            role: decoded.role
+            role: decoded.role,
+            gender: userDetails.gender,
+            profileImg: userDetails.profileImg
         };
 
         next();

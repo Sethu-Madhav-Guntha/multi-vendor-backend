@@ -5,12 +5,15 @@ import { sendResponse } from "../utils/response.js";
 
 // Utility: calculate total
 const calculateTotal = (items) =>
-    items.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+    items.reduce((sum, item) => sum + item.product.sellingPrice * item.quantity, 0);
 
 // Get Cart
 export const getCart = async (req, res, next) => {
     try {
-        const cart = await Cart.findOne({ user: req.user.userId }).populate("items.product");
+        const cart = await Cart.findOne({ user: req.user.userId }).populate({
+            path: "items.product",
+            populate: { path: "store" }
+        });
         if (!cart) return sendResponse(res, 200, true, "Cart is empty", { items: [] });
 
         const totalAmount = calculateTotal(cart.items);
