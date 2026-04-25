@@ -6,13 +6,13 @@ import { sendResponse } from "../utils/response.js";
 // Customer: Create Order (split per store)
 export const createOrder = async (req, res, next) => {
   try {
-    const { items } = req.body; // array of { productId, quantity }
+    const items = req.body;
     if (!items || items.length === 0) return sendResponse(res, 400, false, "No items provided to Order.");
 
     // Group items by store
     const storeGroups = {};
-    for (const { productId, quantity } of items) {
-      const product = await Product.findById(productId).populate("store");
+    for (const { productId, quantity, sellingPrice } of items) {
+      const product = await Product.findById(productId);
       if (!product) return sendResponse(res, 404, false, `Product ${productId} not found`);
       if (product.quantity < quantity) return sendResponse(res, 400, false, `Insufficient stock for ${product.productName}`);
 
@@ -20,7 +20,7 @@ export const createOrder = async (req, res, next) => {
       await product.save();
 
       if (!storeGroups[product.store]) storeGroups[product.store] = [];
-      storeGroups[product.store].push({ product, quantity });
+      storeGroups[product.store].push({ product, quantity, sellingPrice });
     }
 
     // Create separate orders per store
@@ -29,7 +29,8 @@ export const createOrder = async (req, res, next) => {
       const orderItems = storeGroups[storeId].map(i => ({
         product: i.product._id,
         quantity: i.quantity,
-        sellingPrice: i.product.sellingPrice
+        price: i.product.price,
+        sellingPrice: i.sellingPrice
       }));
 
       const totalAmount = orderItems.reduce((sum, i) => sum + i.sellingPrice * i.quantity, 0);
@@ -41,7 +42,6 @@ export const createOrder = async (req, res, next) => {
         totalAmount,
         status: "Pending"
       });
-
       createdOrders.push(order);
     }
 
@@ -66,8 +66,8 @@ export const editOrder = async (req, res, next) => {
     let updatedItems = [];
     let totalAmount = 0;
 
-    for (const { productId, quantity } of items) {
-      const product = await Product.findById(productId).populate("store");
+    for (const { productId, quantity, sellingPrice } of items) {
+      const product = await Product.findById(productId);
       if (!product) return sendResponse(res, 404, false, `Product ${productId} not found`);
       if (product.quantity < quantity) {
         return sendResponse(res, 400, false, `Insufficient stock for ${product.productName}`);
@@ -76,10 +76,10 @@ export const editOrder = async (req, res, next) => {
       updatedItems.push({
         product: product._id,
         quantity,
-        sellingPrice: product.sellingPrice
+        sellingPrice
       });
 
-      totalAmount += product.sellingPrice * quantity;
+      totalAmount += sellingPrice * quantity;
     }
 
     order.items = updatedItems;
@@ -109,7 +109,7 @@ export const deleteOrder = async (req, res, next) => {
 // Customer & Vendor: Get Order by ID
 export const getOrderById = async (req, res, next) => {
   try {
-    const order = await Order.findOne({ _id: req.params.orderId, user: req.user.userId }).populate("items.product").populate("items.product.store");
+    const order = await Order.findOne({ _id: req.params.orderId, user: req.user.userId }).populate({ path: "items.product", populate: { path: "store", populate: { path: "owner" } } });
     if (!order) return sendResponse(res, 404, false, "Order not found");
 
     sendResponse(res, 200, true, "Order fetched successfully", { order });
@@ -121,7 +121,7 @@ export const getOrderById = async (req, res, next) => {
 // Customer: List Orders
 export const listCustomerOrders = async (req, res, next) => {
   try {
-    const orders = await Order.find({ user: req.user.userId }).populate("items.product").populate("store");
+    const orders = await Order.find({ user: req.user.userId }).populate({ path: "items.product", populate: { path: "store", populate: { path: "owner" } } });
     sendResponse(res, 200, true, "Orders fetched successfully", { orders });
   } catch (err) {
     next(err);

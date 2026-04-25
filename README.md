@@ -1,5 +1,11 @@
 # multi-vendor-backend
 Backend Application Code for Multi-Vendor Web Application.
+Added validateToken middleware to the getOrderById for both customer & vendor functionality.
+Populated store details for the product at getStoreDetailsById functionality.
+Populated store & Owner details for the product at listProducts, listCustomerOrders, getOrderById, getCart functionalities.
+Selling Price is added to create and update order, addToCart functionalities. 
+Current Version 4.0.6
+------------------------------------------------------
 Added Profile Image, Gender fields at User model.
 Altered user object at validateToken middleware functionality at authMiddleware.
 Altered user object at Login & Signup functionalities at authController.
@@ -12,7 +18,7 @@ Populated Store details of the Product at get cart items functionality.
 Modified Selling Price to the Order functionality. 
 Populated Store details of the Product at Order functionalities.
 Added Selling Price virtual field and Product Discount field at Product model.
-Current Version 4.0.5
+at this Version 4.0.5
 ------------------------------------------------------
 Altered Orders Routes, modified dev script at package.json.
 Populated Store and User details at Store & Vendor Order APIs.

@@ -82,7 +82,7 @@ export const getProductById = async (req, res, next) => {
 // List Products (public)
 export const listProducts = async (req, res, next) => {
   try {
-    const products = await Product.find().populate("store");
+    const products = await Product.find().populate({ path: "store", populate: { path: "owner" } });
     sendResponse(res, 200, true, "All Products Fetched Successfully.", { products });
   } catch (err) {
     next(err);

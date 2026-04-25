@@ -12,7 +12,7 @@ export const getCart = async (req, res, next) => {
     try {
         const cart = await Cart.findOne({ user: req.user.userId }).populate({
             path: "items.product",
-            populate: { path: "store" }
+            populate: { path: "store", populate: { path: "owner" } }
         });
         if (!cart) return sendResponse(res, 200, true, "Cart is empty", { items: [] });
 
@@ -26,7 +26,7 @@ export const getCart = async (req, res, next) => {
 // Add to Cart
 export const addToCart = async (req, res, next) => {
     try {
-        const { productId, quantity } = req.body;
+        const { productId, quantity, sellingPrice } = req.body;
         const product = await Product.findById(productId);
         if (!product) return sendResponse(res, 404, false, `${productId} Product not Found.`);
         if (product.quantity < quantity) return sendResponse(res, 400, false, `${productId} Insufficient Stock.`);
@@ -38,7 +38,7 @@ export const addToCart = async (req, res, next) => {
         if (existingItem) {
             existingItem.quantity += quantity;
         } else {
-            cart.items.push({ product: productId, quantity });
+            cart.items.push({ product: productId, quantity, sellingPrice });
         }
 
         await cart.save();

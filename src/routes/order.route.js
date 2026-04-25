@@ -9,7 +9,7 @@ import {
   listVendorOrders,
   updateOrderStatus
 } from "../controllers/order.controller.js";
-import { isCustomer, isVendor } from "../middlewares/auth.middleware.js";
+import { isCustomer, isVendor, validateToken } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
@@ -25,6 +25,6 @@ router.get("/store/:storeId", isVendor, listStoreOrders);
 router.put("/vendor/:orderId", isVendor, updateOrderStatus);
 
 // Both Customer and Vendor routes
-router.get("/:orderId", getOrderById);
+router.get("/:orderId", validateToken, getOrderById);
 
 export default router;

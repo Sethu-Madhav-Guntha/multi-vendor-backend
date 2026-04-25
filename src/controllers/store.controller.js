@@ -49,7 +49,7 @@ export const deleteStore = async (req, res, next) => {
 // 4. Get Store by ID
 export const getStoreById = async (req, res, next) => {
     try {
-        const store = await Store.findById(req.params.storeId).populate({
+        const store = await Store.findById(req.params.storeId).populate({path:"owner"}).populate({
             path: "products",
             populate: { path: "store" } // populate store inside each product
         });
