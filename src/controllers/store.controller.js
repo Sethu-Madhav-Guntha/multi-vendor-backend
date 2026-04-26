@@ -4,7 +4,6 @@ import { sendResponse } from "../utils/response.js";
 
 export const createStore = async (req, res, next) => {
     try {
-        // Only Seller role can create stores
         if (req.user.role !== "Vendor") {
             return sendResponse(res, 403, false, "Only Vendors can create Store.");
         }
@@ -17,7 +16,7 @@ export const createStore = async (req, res, next) => {
             owner: req.user.userId
         });
 
-        sendResponse(res, 201, true, `Store By ID: ${store._id} Created Successfully.`, { store });
+        sendResponse(res, 201, true, `${store.storeName} Created by ${req.user.username}.`, { store });
     } catch (err) {
         next(err);
     }
@@ -30,7 +29,7 @@ export const updateStore = async (req, res, next) => {
         req.store.storeImg = req.body.storeImg || req.store.storeImg;
         req.store.storeDiscount = req.body.storeDiscount || req.store.storeDiscount;
         const updatedStore = await req.store.save();
-        sendResponse(res, 200, true, `Store By ID: ${req.store._id} Updated Successfully.`, { store: updatedStore });
+        sendResponse(res, 200, true, `${req.store.storeName} Details Updated.`, { store: updatedStore });
     } catch (err) {
         next(err);
     }
@@ -49,12 +48,12 @@ export const deleteStore = async (req, res, next) => {
 // 4. Get Store by ID
 export const getStoreById = async (req, res, next) => {
     try {
-        const store = await Store.findById(req.params.storeId).populate({path:"owner"}).populate({
+        const store = await Store.findById(req.params.storeId).populate({ path: "owner" }).populate({
             path: "products",
             populate: { path: "store" } // populate store inside each product
         });
-        if (!store) return sendResponse(res, 404, false, "Store Not Found.");
-        sendResponse(res, 200, true, `Store By ID: ${req.params.storeId} Fetched Successfully.`, { store });
+        if (!store) return sendResponse(res, 404, false, `${req.params.storeId} Store Not Found.`);
+        sendResponse(res, 200, true, `${store.storeName} Details Fetched.`, { store });
     } catch (err) {
         next(err);
     }
@@ -66,7 +65,7 @@ export const listStores = async (req, res, next) => {
         let query = {};
         if (req.user.role === "Vendor") query.owner = req.user.userId;
         const storesList = await Store.find(query);
-        sendResponse(res, 200, true, "Vendor's All Stores Fetched Successfully.", { storesList });
+        sendResponse(res, 200, true, `${req.user.username}'s Stores Fetched.`, { storesList });
     } catch (err) {
         next(err);
     }

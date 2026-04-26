@@ -15,7 +15,7 @@ export const loginUser = async (req, res, next) => {
         }
 
         const token = tokenGeneration(user._id, user.role);
-        return sendResponse(res, 200, true, "Login Successful.", {
+        return sendResponse(res, 200, true, `${user.username} LoggedIn.`, {
             redirect: "/",
             token,
             user: {
@@ -45,7 +45,7 @@ export const signupUser = async (req, res, next) => {
 
         if (status === "success") {
             const token = tokenGeneration(user._id, user.role);
-            return sendResponse(res, 201, true, "User Registered Successfully.", {
+            return sendResponse(res, 201, true, `${user.username} Registered as ${user.role}.`, {
                 redirect: "/",
                 token,
                 user: {
@@ -65,7 +65,7 @@ export const signupUser = async (req, res, next) => {
 
 export const getUserDetails = async (req, res, next) => {
     try {
-        return sendResponse(res, 200, true, "Fetched User Details Successfully.", { user: req.user });
+        return sendResponse(res, 200, true, `Fetched ${req.user.username} Details Successfully.`, { user: req.user });
     } catch (err) {
         next(err);
     }

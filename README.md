@@ -1,10 +1,13 @@
 # multi-vendor-backend
 Backend Application Code for Multi-Vendor Web Application.
+Response Messages are updated.
+Current Version: 4.0.7
+------------------------------------------------------
 Added validateToken middleware to the getOrderById for both customer & vendor functionality.
 Populated store details for the product at getStoreDetailsById functionality.
 Populated store & Owner details for the product at listProducts, listCustomerOrders, getOrderById, getCart functionalities.
 Selling Price is added to create and update order, addToCart functionalities. 
-Current Version 4.0.6
+at this Version 4.0.6
 ------------------------------------------------------
 Added Profile Image, Gender fields at User model.
 Altered user object at validateToken middleware functionality at authMiddleware.

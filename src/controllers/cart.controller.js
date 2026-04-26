@@ -14,10 +14,10 @@ export const getCart = async (req, res, next) => {
             path: "items.product",
             populate: { path: "store", populate: { path: "owner" } }
         });
-        if (!cart) return sendResponse(res, 200, true, "Cart is empty", { items: [] });
+        if (!cart) return sendResponse(res, 200, true, `${req.user.username}'s Cart is empty`, { items: [] });
 
         const totalAmount = calculateTotal(cart.items);
-        sendResponse(res, 200, true, "Cart Fetched Successfully.", { cart, totalAmount });
+        sendResponse(res, 200, true, `${req.user.username}'s Cart Fetched.`, { cart, totalAmount });
     } catch (err) {
         next(err);
     }
@@ -29,7 +29,7 @@ export const addToCart = async (req, res, next) => {
         const { productId, quantity, sellingPrice } = req.body;
         const product = await Product.findById(productId);
         if (!product) return sendResponse(res, 404, false, `${productId} Product not Found.`);
-        if (product.quantity < quantity) return sendResponse(res, 400, false, `${productId} Insufficient Stock.`);
+        if (product.quantity < quantity) return sendResponse(res, 400, false, `${product.productName}'s Stock is Insufficient.`);
 
         let cart = await Cart.findOne({ user: req.user.userId });
         if (!cart) cart = new Cart({ user: req.user.userId, items: [] });
@@ -42,7 +42,7 @@ export const addToCart = async (req, res, next) => {
         }
 
         await cart.save();
-        sendResponse(res, 200, true, `${productId} Product added to Cart Successfully.`, { cart });
+        sendResponse(res, 200, true, `${product.productName} is added to Cart.`, { cart });
     } catch (err) {
         next(err);
     }
@@ -55,7 +55,7 @@ export const removeFromCart = async (req, res, next) => {
         const { removeAll } = req.body; // ✅ optional flag
 
         const cart = await Cart.findOne({ user: req.user.userId });
-        if (!cart) return sendResponse(res, 200, true, "Cart is Empty.", { items: [] });
+        if (!cart) return sendResponse(res, 200, true, `${req.user.username}'s Cart is Empty.`, { items: [] });
 
         const item = cart.items.find(i => i.product.toString() === productId);
         if (!item) return sendResponse(res, 404, false, `${productId} Product not found in Cart.`);
@@ -70,7 +70,7 @@ export const removeFromCart = async (req, res, next) => {
         }
 
         await cart.save();
-        sendResponse(res, 200, true, "Cart updated successfully", { cart });
+        sendResponse(res, 200, true, `${req.user.username}'s Cart updated.`, { cart });
     } catch (err) {
         next(err);
     }
@@ -80,12 +80,12 @@ export const removeFromCart = async (req, res, next) => {
 export const clearCart = async (req, res, next) => {
     try {
         const cart = await Cart.findOne({ user: req.user.userId });
-        if (!cart) return sendResponse(res, 200, true, `Cart is already Empty.`, { items: [] });
+        if (!cart) return sendResponse(res, 200, true, `${req.user.username}'s Cart is already Empty.`, { items: [] });
 
         cart.items = [];
         await cart.save();
 
-        sendResponse(res, 200, true, "Cart Cleared Successfully.");
+        sendResponse(res, 200, true, `${req.user.username}'s Cart Cleared.`);
     } catch (err) {
         next(err);
     }

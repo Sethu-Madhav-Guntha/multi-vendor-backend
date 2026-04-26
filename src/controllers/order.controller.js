@@ -13,8 +13,8 @@ export const createOrder = async (req, res, next) => {
     const storeGroups = {};
     for (const { productId, quantity, sellingPrice } of items) {
       const product = await Product.findById(productId);
-      if (!product) return sendResponse(res, 404, false, `Product ${productId} not found`);
-      if (product.quantity < quantity) return sendResponse(res, 400, false, `Insufficient stock for ${product.productName}`);
+      if (!product) return sendResponse(res, 404, false, `${productId} Product not found`);
+      if (product.quantity < quantity) return sendResponse(res, 400, false, `${product.productName}'s Stock is Insufficient.`);
 
       product.quantity -= quantity;
       await product.save();
@@ -45,7 +45,7 @@ export const createOrder = async (req, res, next) => {
       createdOrders.push(order);
     }
 
-    sendResponse(res, 201, true, "Orders Created Successfully.", { orders: createdOrders });
+    sendResponse(res, 201, true, "Orders Placed.", { orders: createdOrders });
   } catch (err) {
     next(err);
   }
@@ -55,12 +55,12 @@ export const createOrder = async (req, res, next) => {
 export const editOrder = async (req, res, next) => {
   try {
     const order = await Order.findOne({ _id: req.params.orderId, user: req.user.userId });
-    if (!order) return sendResponse(res, 404, false, "Order not found");
+    if (!order) return sendResponse(res, 404, false, `${req.params.orderId} Order not found`);
     if (order.status !== "Pending") return sendResponse(res, 400, false, "Only Pending orders can be edited");
 
     const { items } = req.body;
     if (!items || items.length === 0) {
-      return sendResponse(res, 400, false, "No items provided");
+      return sendResponse(res, 400, false, "No items provided to place order.");
     }
 
     let updatedItems = [];
@@ -70,7 +70,7 @@ export const editOrder = async (req, res, next) => {
       const product = await Product.findById(productId);
       if (!product) return sendResponse(res, 404, false, `Product ${productId} not found`);
       if (product.quantity < quantity) {
-        return sendResponse(res, 400, false, `Insufficient stock for ${product.productName}`);
+        return sendResponse(res, 400, false, `${product.productName}'s Stock is Insufficient.`);
       }
 
       updatedItems.push({
@@ -86,7 +86,7 @@ export const editOrder = async (req, res, next) => {
     order.totalAmount = totalAmount;
 
     await order.save();
-    sendResponse(res, 200, true, "Order edited successfully", { order });
+    sendResponse(res, 200, true, `${req.params.orderId} Order Updated.`, { order });
   } catch (err) {
     next(err);
   }
@@ -96,8 +96,8 @@ export const editOrder = async (req, res, next) => {
 export const deleteOrder = async (req, res, next) => {
   try {
     const order = await Order.findOne({ _id: req.params.orderId, user: req.user.userId });
-    if (!order) return sendResponse(res, 404, false, "Order not found");
-    if (order.status !== "Pending") return sendResponse(res, 400, false, "Only Pending orders can be deleted");
+    if (!order) return sendResponse(res, 404, false, `${req.params.orderId} Order not found.`);
+    if (order.status !== "Pending") return sendResponse(res, 400, false, "Only Pending orders can be deleted.");
 
     await order.deleteOne();
     res.status(204).end();
@@ -110,9 +110,9 @@ export const deleteOrder = async (req, res, next) => {
 export const getOrderById = async (req, res, next) => {
   try {
     const order = await Order.findOne({ _id: req.params.orderId, user: req.user.userId }).populate({ path: "items.product", populate: { path: "store", populate: { path: "owner" } } });
-    if (!order) return sendResponse(res, 404, false, "Order not found");
+    if (!order) return sendResponse(res, 404, false, `${req.params.orderId} Order not found.`);
 
-    sendResponse(res, 200, true, "Order fetched successfully", { order });
+    sendResponse(res, 200, true, `${req.params.orderId} Order fetched.`, { order });
   } catch (err) {
     next(err);
   }
@@ -122,7 +122,7 @@ export const getOrderById = async (req, res, next) => {
 export const listCustomerOrders = async (req, res, next) => {
   try {
     const orders = await Order.find({ user: req.user.userId }).populate({ path: "items.product", populate: { path: "store", populate: { path: "owner" } } });
-    sendResponse(res, 200, true, "Orders fetched successfully", { orders });
+    sendResponse(res, 200, true, `${req.user.username} Orders fetched.`, { orders });
   } catch (err) {
     next(err);
   }
@@ -133,7 +133,7 @@ export const listStoreOrders = async (req, res, next) => {
   try {
     const { storeId } = req.params;
     const orders = await Order.find({ store: storeId }).populate("items.product").populate("store").populate("user");
-    sendResponse(res, 200, true, "Store orders fetched successfully", { orders });
+    sendResponse(res, 200, true, `${orders[0].store.storeName} Store orders fetched.`, { orders });
   } catch (err) {
     next(err);
   }
@@ -146,7 +146,7 @@ export const listVendorOrders = async (req, res, next) => {
     const storeIds = stores.map(s => s._id);
 
     const orders = await Order.find({ store: { $in: storeIds } }).populate("items.product").populate("store").populate("user");
-    sendResponse(res, 200, true, "Vendor orders fetched successfully", { orders });
+    sendResponse(res, 200, true, `${req.user.username}'s all stores orders fetched.`, { orders });
   } catch (err) {
     next(err);
   }
@@ -157,12 +157,12 @@ export const updateOrderStatus = async (req, res, next) => {
   try {
     const { status } = req.body;
     const order = await Order.findById(req.params.orderId);
-    if (!order) return sendResponse(res, 404, false, "Order not found");
+    if (!order) return sendResponse(res, 404, false, `${req.params.orderId} Order not found.`);
 
     order.status = status;
     await order.save();
 
-    sendResponse(res, 200, true, "Order status updated successfully", { order });
+    sendResponse(res, 200, true, `${req.params.orderId} Order status updated successfully`, { order });
   } catch (err) {
     next(err);
   }

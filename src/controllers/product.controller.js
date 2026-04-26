@@ -7,7 +7,7 @@ export const createProduct = async (req, res, next) => {
   try {
     const store = await Store.findById(req.body.storeId);
     if (!store || store.owner.toString() !== req.user.userId) {
-      return sendResponse(res, 403, false, "Unauthorized to add product to this store.");
+      return sendResponse(res, 403, false, `Unauthorized to add product to ${store.storeName} store.`);
     }
 
     const product = await Product.create({
@@ -27,7 +27,7 @@ export const createProduct = async (req, res, next) => {
       { new: true }
     );
 
-    sendResponse(res, 201, true, `${product._id} Product Created Successfully.`, { product });
+    sendResponse(res, 201, true, `${product.productName} Product added at ${store.storeName} by ${req.user.username}.`, { product });
   } catch (err) {
     next(err);
   }
@@ -44,7 +44,7 @@ export const updateProduct = async (req, res, next) => {
     req.product.productDiscount = req.body.productDiscount || req.product.productDiscount;
 
     const updatedProduct = await req.product.save();
-    sendResponse(res, 200, true, `${req.params.productId} Product Updated Successfully.`, { product: updatedProduct });
+    sendResponse(res, 200, true, `${req.product.productName} Product Updated by ${req.user.username}.`, { product: updatedProduct });
   } catch (err) {
     next(err);
   }
@@ -72,8 +72,8 @@ export const deleteProduct = async (req, res, next) => {
 export const getProductById = async (req, res, next) => {
   try {
     const product = await Product.findById(req.params.productId).populate("store");
-    if (!product) return sendResponse(res, 404, false, "Product not found");
-    sendResponse(res, 200, true, `${req.params.productId} Product Fetched Successfully.`, { product });
+    if (!product) return sendResponse(res, 404, false, `${req.params.productId} Product not found.`);
+    sendResponse(res, 200, true, `${product.productName} Product Details Fetched.`, { product });
   } catch (err) {
     next(err);
   }
@@ -83,7 +83,7 @@ export const getProductById = async (req, res, next) => {
 export const listProducts = async (req, res, next) => {
   try {
     const products = await Product.find().populate({ path: "store", populate: { path: "owner" } });
-    sendResponse(res, 200, true, "All Products Fetched Successfully.", { products });
+    sendResponse(res, 200, true, "All Products Fetched.", { products });
   } catch (err) {
     next(err);
   }
