@@ -1,5 +1,7 @@
 import Store from "../models/store.model.js";
 import Product from "../models/product.model.js";
+import Cart from "../models/cart.model.js";
+import Order from "../models/order.model.js";
 import { sendResponse } from "../utils/response.js";
 
 export const createStore = async (req, res, next) => {
@@ -37,7 +39,19 @@ export const updateStore = async (req, res, next) => {
 
 export const deleteStore = async (req, res, next) => {
     try {
-        await Product.deleteMany({ store: req.store._id })
+        await Product.deleteMany({ store: req.store._id });
+        await Order.deleteMany({ store: req.store._id });
+
+        const carts = await Cart.find().populate({
+            path: "items.product", populate: {
+                path: "store"
+            }
+        });
+        carts.map(async (cart) => {
+            cart.items = cart.items.filter(item => item.product?.store?._id.toString() !== req.store._id.toString());
+            await cart.save();
+        });
+
         await req.store.deleteOne();
         res.status(204).end(); // no body for 204
     } catch (err) {

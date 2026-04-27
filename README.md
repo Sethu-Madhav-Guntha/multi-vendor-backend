@@ -1,7 +1,10 @@
 # multi-vendor-backend
 Backend Application Code for Multi-Vendor Web Application.
+On Store deletion, removed it's related Products, Orders and Cart Items.
+Current Version: 4.0.8
+------------------------------------------------------
 Response Messages are updated.
-Current Version: 4.0.7
+at this Version: 4.0.7
 ------------------------------------------------------
 Added validateToken middleware to the getOrderById for both customer & vendor functionality.
 Populated store details for the product at getStoreDetailsById functionality.

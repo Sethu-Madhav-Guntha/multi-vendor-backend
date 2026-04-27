@@ -5,7 +5,7 @@ import { sendResponse } from "../utils/response.js";
 
 // Utility: calculate total
 const calculateTotal = (items) =>
-    items.reduce((sum, item) => sum + item.product.sellingPrice * item.quantity, 0);
+    items.reduce((sum, item) => sum + item.sellingPrice * item.quantity, 0);
 
 // Get Cart
 export const getCart = async (req, res, next) => {
