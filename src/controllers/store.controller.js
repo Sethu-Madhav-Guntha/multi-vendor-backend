@@ -47,11 +47,11 @@ export const deleteStore = async (req, res, next) => {
                 path: "store"
             }
         });
-        carts.map(async (cart) => {
-            cart.items = cart.items.filter(item => item.product?.store?._id.toString() !== req.store._id.toString());
-            await cart.save();
-        });
 
+        for (const cart of carts) {
+            cart.items = cart.items.filter(item => item.product && item.product.store?._id.toString() !== req.store._id.toString());
+            await cart.save();
+        }
         await req.store.deleteOne();
         res.status(204).end(); // no body for 204
     } catch (err) {

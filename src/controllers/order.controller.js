@@ -109,7 +109,7 @@ export const deleteOrder = async (req, res, next) => {
 // Customer & Vendor: Get Order by ID
 export const getOrderById = async (req, res, next) => {
   try {
-    const order = await Order.findOne({ _id: req.params.orderId, user: req.user.userId }).populate({ path: "items.product", populate: { path: "store", populate: { path: "owner" } } });
+    const order = await Order.findOne({ _id: req.params.orderId }).populate({ path: "items.product", populate: { path: "store", populate: { path: "owner" } } });
     if (!order) return sendResponse(res, 404, false, `${req.params.orderId} Order not found.`);
 
     sendResponse(res, 200, true, `${req.params.orderId} Order fetched.`, { order });
@@ -133,7 +133,7 @@ export const listStoreOrders = async (req, res, next) => {
   try {
     const { storeId } = req.params;
     const orders = await Order.find({ store: storeId }).populate("items.product").populate("store").populate("user");
-    sendResponse(res, 200, true, `${orders[0].store.storeName} Store orders fetched.`, { orders });
+    sendResponse(res, 200, true, `${orders[0]?.store.storeName} Store orders fetched.`, { orders });
   } catch (err) {
     next(err);
   }

@@ -1,7 +1,12 @@
 # multi-vendor-backend
 Backend Application Code for Multi-Vendor Web Application.
+Modified Store deletion functionality.
+Added error stack trace at error middleware.
+Replaced new: true to returnDocument: "after" on Updating API's.
+Current Version: 4.0.9
+------------------------------------------------------
 On Store deletion, removed it's related Products, Orders and Cart Items.
-Current Version: 4.0.8
+at this Version: 4.0.8
 ------------------------------------------------------
 Response Messages are updated.
 at this Version: 4.0.7

@@ -24,7 +24,7 @@ export const createProduct = async (req, res, next) => {
     await Store.findByIdAndUpdate(
       store._id,
       { $push: { products: product._id } },
-      { new: true }
+      { returnDocument: "after" }
     );
 
     sendResponse(res, 201, true, `${product.productName} Product added at ${store.storeName} by ${req.user.username}.`, { product });
@@ -57,7 +57,7 @@ export const deleteProduct = async (req, res, next) => {
     await Store.findByIdAndUpdate(
       req.product.store,
       { $pull: { products: req.product._id } },
-      { new: true }
+      { returnDocument: "after" }
     );
 
     // ✅ Delete the product itself
