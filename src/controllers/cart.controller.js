@@ -1,11 +1,10 @@
 import Cart from "../models/cart.model.js";
 import Product from "../models/product.model.js";
-// import Order from "../models/order.model.js"; // Order schema will be defined separately
 import { sendResponse } from "../utils/response.js";
 
 // Utility: calculate total
 const calculateTotal = (items) =>
-    items.reduce((sum, item) => sum + item.sellingPrice * item.quantity, 0);
+    items.reduce((sum, item) => sum + item.product.sellingPrice * item.quantity, 0);
 
 // Get Cart
 export const getCart = async (req, res, next) => {
@@ -86,15 +85,6 @@ export const clearCart = async (req, res, next) => {
         await cart.save();
 
         sendResponse(res, 200, true, `${req.user.username}'s Cart Cleared.`);
-    } catch (err) {
-        next(err);
-    }
-};
-
-// Checkout Cart
-export const checkoutCart = async (req, res, next) => {
-    try {
-        // TODO: Order the cart items.  
     } catch (err) {
         next(err);
     }

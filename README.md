@@ -1,9 +1,12 @@
 # multi-vendor-backend
 Backend Application Code for Multi-Vendor Web Application.
+Altered Cart Controller for Cart Total Price.
+Current Version: 4.1.0
+------------------------------------------------------
 Modified Store deletion functionality.
 Added error stack trace at error middleware.
 Replaced new: true to returnDocument: "after" on Updating API's.
-Current Version: 4.0.9
+at this Version: 4.0.9
 ------------------------------------------------------
 On Store deletion, removed it's related Products, Orders and Cart Items.
 at this Version: 4.0.8
