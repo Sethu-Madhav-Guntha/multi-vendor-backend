@@ -1,7 +1,11 @@
 # multi-vendor-backend
 Backend Application Code for Multi-Vendor Web Application.
+Added start for executing application.
+Altered Cart Routes.
+Installed eslint, prettier, nodemon development dependent libraries.
+------------------------------------------------------
 Altered Cart Controller for Cart Total Price.
-Current Version: 4.1.0
+at this Version: 4.1.0
 ------------------------------------------------------
 Modified Store deletion functionality.
 Added error stack trace at error middleware.
