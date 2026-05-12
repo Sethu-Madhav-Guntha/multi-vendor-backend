@@ -1,5 +1,6 @@
 import Product from "../models/product.model.js";
 import Store from "../models/store.model.js";
+import Cart from "../models/cart.model.js";
 import { sendResponse } from "../utils/response.js";
 
 // Create Product
@@ -59,6 +60,12 @@ export const deleteProduct = async (req, res, next) => {
       { $pull: { products: req.product._id } },
       { returnDocument: "after" }
     );
+
+    const carts = await Cart.find();
+    carts?.map(cart => {
+      cart.items = cart.items?.filter(item => item.product._id !== req.product._id);
+      cart.save();
+    });
 
     // ✅ Delete the product itself
     await req.product.deleteOne();

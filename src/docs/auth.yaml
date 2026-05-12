@@ -1,0 +1,313 @@
+tags:
+  - name: Auth
+    description: Authentication and user management endpoints
+
+paths:
+  /auth/login:
+    post:
+      summary: Login a user
+      description: Authenticates a user with email and password. Returns a JWT token and user details on success.
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+            example:
+              email: john@example.com
+              password: password123
+      responses:
+        "200":
+          description: User logged in successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthSuccessResponse"
+              example:
+                success: true
+                message: "John LoggedIn."
+                data:
+                  redirect: "/"
+                  token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  user:
+                    userId: "64abc123def456"
+                    username: "John"
+                    email: "john@example.com"
+                    role: "User"
+                    gender: "Male"
+                    profileImg: "https://example.com/image.jpg"
+        "401":
+          description: Email not found or invalid password
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                emailNotFound:
+                  summary: Email does not exist
+                  value:
+                    success: false
+                    message: "User Email Doesn't Exist. Please register."
+                    data:
+                      redirect: "/signup"
+                      prefillData:
+                        email: "john@example.com"
+                invalidPassword:
+                  summary: Wrong password
+                  value:
+                    success: false
+                    message: "Invalid Credentials. Please try again."
+                    data:
+                      prefillData:
+                        email: "john@example.com"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /auth/signup:
+    post:
+      summary: Register a new user
+      description: Creates a new user account. Returns a JWT token and user details on successful registration.
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SignupRequest"
+            example:
+              username: John
+              email: john@example.com
+              password: password123
+              gender: Male
+              role: User
+      responses:
+        "201":
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthSuccessResponse"
+              example:
+                success: true
+                message: "John Registered as User."
+                data:
+                  redirect: "/"
+                  token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  user:
+                    userId: "64abc123def456"
+                    username: "John"
+                    email: "john@example.com"
+                    role: "User"
+                    gender: "Male"
+                    profileImg: "https://example.com/image.jpg"
+        "409":
+          description: User with this email already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                message: "User Email Account Exists. Please login."
+                data:
+                  redirect: "/login"
+                  prefillData:
+                    email: "john@example.com"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /auth/user:
+    get:
+      summary: Get logged-in user details
+      description: Returns the details of the currently authenticated user. Requires a valid JWT token.
+      tags:
+        - Auth
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: User details fetched successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Fetched John Details Successfully."
+                  data:
+                    type: object
+                    properties:
+                      user:
+                        $ref: "#/components/schemas/UserResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "Enter your JWT token. Example: Bearer eyJhbGci..."
+
+  schemas:
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          description: Registered email address of the user
+          example: john@example.com
+        password:
+          type: string
+          format: password
+          minLength: 6
+          description: Account password (minimum 6 characters)
+          example: password123
+
+    SignupRequest:
+      type: object
+      required:
+        - username
+        - email
+        - password
+        - gender
+      properties:
+        username:
+          type: string
+          description: Display name of the user
+          example: John
+        email:
+          type: string
+          format: email
+          description: Valid email address (must be unique)
+          example: john@example.com
+        password:
+          type: string
+          format: password
+          minLength: 6
+          description: Password (minimum 6 characters)
+          example: password123
+        gender:
+          type: string
+          enum:
+            - Male
+            - Female
+          description: Gender of the user (determines default profile image)
+          example: Male
+        role:
+          type: string
+          enum:
+            - Admin
+            - User
+            - Vendor
+          default: User
+          description: Role of the user in the system
+          example: User
+
+    UserResponse:
+      type: object
+      properties:
+        userId:
+          type: string
+          description: MongoDB ObjectId of the user
+          example: "64abc123def456"
+        username:
+          type: string
+          description: Display name of the user
+          example: John
+        email:
+          type: string
+          format: email
+          description: Email address of the user
+          example: john@example.com
+        role:
+          type: string
+          enum:
+            - Admin
+            - User
+            - Vendor
+          description: Role assigned to the user
+          example: User
+        gender:
+          type: string
+          enum:
+            - Male
+            - Female
+          description: Gender of the user
+          example: Male
+        profileImg:
+          type: string
+          format: uri
+          description: URL of the user's profile image (auto-assigned based on gender if not provided)
+          example: "https://img.freepik.com/..."
+
+    AuthSuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "John LoggedIn."
+        data:
+          type: object
+          properties:
+            redirect:
+              type: string
+              description: Frontend route to redirect after auth
+              example: "/"
+            token:
+              type: string
+              description: JWT token for authenticating future requests
+              example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+            user:
+              $ref: "#/components/schemas/UserResponse"
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "Something went wrong."
+        data:
+          type: object
+          description: Additional context about the error (optional)
+
+  responses:
+    Unauthorized:
+      description: Missing or invalid JWT token
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            success: false
+            message: "Unauthorized. Token missing or invalid."
+
+    InternalServerError:
+      description: Unexpected server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            success: false
+            message: "Internal Server Error."

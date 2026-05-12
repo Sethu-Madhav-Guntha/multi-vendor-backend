@@ -1,8 +1,13 @@
 # multi-vendor-backend
 Backend Application Code for Multi-Vendor Web Application.
+Implemented Swagger for API Documentation.
+On deleting Product, it removes the product at Cart too.
+Current Version: 4.2.0
+------------------------------------------------------
 Added start for executing application.
 Altered Cart Routes.
 Installed eslint, prettier, nodemon development dependent libraries.
+at this Version: 4.1.1
 ------------------------------------------------------
 Altered Cart Controller for Cart Total Price.
 at this Version: 4.1.0

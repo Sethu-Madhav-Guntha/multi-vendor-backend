@@ -10,10 +10,12 @@ import orderRouter from "./src/routes/order.route.js";
 import connectDB from "./src/config/db.js";
 import { errorHandler } from "./src/middlewares/err.middleware.js";
 import { isCustomer, isVendor } from "./src/middlewares/auth.middleware.js";
+import { swaggerSpec, swaggerUi } from "./src/config/swagger.js";
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use("/api-documentation", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 dotenv.config();
 connectDB();
 

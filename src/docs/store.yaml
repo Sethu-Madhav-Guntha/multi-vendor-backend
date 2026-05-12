@@ -1,0 +1,533 @@
+tags:
+  - name: Stores
+    description: >
+      Store management endpoints. All routes require authentication as a Vendor (`isVendor`).
+      Store-specific routes (update, delete, get by ID) additionally require store ownership, verified by the `verifyStoreOwnership` middleware.
+
+paths:
+  /stores/create:
+    post:
+      summary: Create a new store
+      description: >
+        Creates a new store owned by the authenticated vendor.
+        The role check is enforced both at the middleware level (`isVendor`) and inside the controller —
+        only users with role **"Vendor"** can create a store.
+        The authenticated user is automatically set as the store owner.
+      tags:
+        - Stores
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateStoreRequest"
+            example:
+              storeName: "SportZone"
+              description: "Premium sports gear and accessories"
+              storeDiscount: 5
+              storeImg: "https://example.com/sportzone.jpg"
+      responses:
+        "201":
+          description: Store created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StoreResponse"
+              example:
+                success: true
+                message: "SportZone Created by VendorJohn."
+                data:
+                  store:
+                    _id: "64str001abc111"
+                    storeName: "SportZone"
+                    description: "Premium sports gear and accessories"
+                    storeDiscount: 5
+                    storeImg: "https://example.com/sportzone.jpg"
+                    owner: "64usr002abc222"
+                    products: []
+                    createdAt: "2024-01-01T10:00:00.000Z"
+                    updatedAt: "2024-01-01T10:00:00.000Z"
+        "403":
+          description: Authenticated user is not a Vendor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                message: "Only Vendors can create Store."
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /stores/{storeId}:
+    get:
+      summary: Get store by ID
+      description: >
+        Fetches full details of a specific store including the owner's profile and all products (with each product's store populated).
+        Only accessible by the **authenticated vendor who owns the store** (verified by `verifyStoreOwnership`).
+      tags:
+        - Stores
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: storeId
+          required: true
+          schema:
+            type: string
+          description: MongoDB ObjectId of the store
+          example: "64str001abc111"
+      responses:
+        "200":
+          description: Store details fetched successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "SportZone Details Fetched."
+                  data:
+                    type: object
+                    properties:
+                      store:
+                        $ref: "#/components/schemas/PopulatedStore"
+              example:
+                success: true
+                message: "SportZone Details Fetched."
+                data:
+                  store:
+                    _id: "64str001abc111"
+                    storeName: "SportZone"
+                    description: "Premium sports gear and accessories"
+                    storeDiscount: 5
+                    storeImg: "https://example.com/sportzone.jpg"
+                    owner:
+                      _id: "64usr002abc222"
+                      username: "VendorJohn"
+                      email: "vendor@example.com"
+                      role: "Vendor"
+                    products:
+                      - _id: "64prd001abc111"
+                        productName: "Running Shoes"
+                        price: 1299
+                        productDiscount: 8
+                        quantity: 50
+                        sellingPrice: 1195.08
+                        store:
+                          _id: "64str001abc111"
+                          storeName: "SportZone"
+                    createdAt: "2024-01-01T10:00:00.000Z"
+                    updatedAt: "2024-01-01T10:00:00.000Z"
+        "404":
+          description: Store not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                message: "64str001abc111 Store Not Found."
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    put:
+      summary: Update store details
+      description: >
+        Updates an existing store's details. Only accessible by the **authenticated vendor who owns the store** (verified by `verifyStoreOwnership`).
+        All fields are **optional** — only provided fields will be updated; others retain their existing values.
+      tags:
+        - Stores
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: storeId
+          required: true
+          schema:
+            type: string
+          description: MongoDB ObjectId of the store to update
+          example: "64str001abc111"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateStoreRequest"
+            example:
+              storeName: "SportZone Premium"
+              storeDiscount: 10
+      responses:
+        "200":
+          description: Store updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StoreResponse"
+              example:
+                success: true
+                message: "SportZone Premium Details Updated."
+                data:
+                  store:
+                    _id: "64str001abc111"
+                    storeName: "SportZone Premium"
+                    description: "Premium sports gear and accessories"
+                    storeDiscount: 10
+                    storeImg: "https://example.com/sportzone.jpg"
+                    owner: "64usr002abc222"
+                    products:
+                      - "64prd001abc111"
+                    createdAt: "2024-01-01T10:00:00.000Z"
+                    updatedAt: "2024-01-02T10:00:00.000Z"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: Store not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                message: "64str001abc111 Store Not Found."
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    delete:
+      summary: Delete a store and all related data
+      description: >
+        Permanently deletes a store. Only accessible by the **authenticated vendor who owns the store** (verified by `verifyStoreOwnership`).
+        This is a **cascading delete** — the following are also removed automatically:
+        - All **products** belonging to this store
+        - All **orders** placed for this store
+        - All **cart items** referencing products from this store (across all customer carts)
+
+        Returns **204 No Content** on successful deletion.
+      tags:
+        - Stores
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: storeId
+          required: true
+          schema:
+            type: string
+          description: MongoDB ObjectId of the store to delete
+          example: "64str001abc111"
+      responses:
+        "204":
+          description: Store and all related data deleted successfully. No content returned.
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: Store not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                message: "64str001abc111 Store Not Found."
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /stores:
+    get:
+      summary: List stores
+      description: >
+        Returns a list of stores based on the authenticated vendor's role:
+        - **Vendor** — sees only their own stores (filtered by `owner`)
+        - **Admin** — sees all stores in the system (no filter applied)
+      tags:
+        - Stores
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Stores fetched successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "VendorJohn's Stores Fetched."
+                  data:
+                    type: object
+                    properties:
+                      storesList:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Store"
+              examples:
+                vendorStores:
+                  summary: Vendor sees their own stores
+                  value:
+                    success: true
+                    message: "VendorJohn's Stores Fetched."
+                    data:
+                      storesList:
+                        - _id: "64str001abc111"
+                          storeName: "SportZone"
+                          description: "Premium sports gear"
+                          storeDiscount: 5
+                          storeImg: "https://example.com/sportzone.jpg"
+                          owner: "64usr002abc222"
+                          products:
+                            - "64prd001abc111"
+                          createdAt: "2024-01-01T10:00:00.000Z"
+                          updatedAt: "2024-01-01T10:00:00.000Z"
+                adminStores:
+                  summary: Admin sees all stores
+                  value:
+                    success: true
+                    message: "AdminUser's Stores Fetched."
+                    data:
+                      storesList:
+                        - _id: "64str001abc111"
+                          storeName: "SportZone"
+                          owner: "64usr002abc222"
+                          storeDiscount: 5
+                          products: []
+                        - _id: "64str002abc222"
+                          storeName: "TechHub"
+                          owner: "64usr003abc333"
+                          storeDiscount: 0
+                          products: []
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+components:
+  schemas:
+    CreateStoreRequest:
+      type: object
+      required:
+        - storeName
+        - storeDiscount
+      properties:
+        storeName:
+          type: string
+          description: Name of the store
+          example: "SportZone"
+        description:
+          type: string
+          description: Short description of the store (optional)
+          example: "Premium sports gear and accessories"
+        storeDiscount:
+          type: number
+          minimum: 0
+          description: Store-wide discount percentage applied to all products (0 if no discount)
+          example: 5
+        storeImg:
+          type: string
+          description: URL of the store image. Defaults to a placeholder if not provided or empty.
+          example: "https://example.com/sportzone.jpg"
+
+    UpdateStoreRequest:
+      type: object
+      description: All fields are optional. Only provided fields will be updated.
+      properties:
+        storeName:
+          type: string
+          description: Updated store name
+          example: "SportZone Premium"
+        description:
+          type: string
+          description: Updated store description
+          example: "Premium and exclusive sports gear"
+        storeDiscount:
+          type: number
+          minimum: 0
+          description: Updated store-wide discount percentage
+          example: 10
+        storeImg:
+          type: string
+          description: Updated store image URL
+          example: "https://example.com/sportzone-premium.jpg"
+
+    Store:
+      type: object
+      properties:
+        _id:
+          type: string
+          description: MongoDB ObjectId of the store
+          example: "64str001abc111"
+        storeName:
+          type: string
+          example: "SportZone"
+        description:
+          type: string
+          example: "Premium sports gear and accessories"
+        storeDiscount:
+          type: number
+          description: Store-wide discount percentage applied to all products
+          example: 5
+        storeImg:
+          type: string
+          description: URL of the store image
+          example: "https://example.com/sportzone.jpg"
+        owner:
+          type: string
+          description: MongoDB ObjectId referencing the vendor (User)
+          example: "64usr002abc222"
+        products:
+          type: array
+          description: Array of product ObjectIds belonging to this store
+          items:
+            type: string
+          example:
+            - "64prd001abc111"
+            - "64prd002abc222"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2024-01-01T10:00:00.000Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2024-01-01T10:00:00.000Z"
+
+    PopulatedStore:
+      allOf:
+        - $ref: "#/components/schemas/Store"
+        - type: object
+          properties:
+            owner:
+              type: object
+              description: Populated owner (vendor) details
+              properties:
+                _id:
+                  type: string
+                  example: "64usr002abc222"
+                username:
+                  type: string
+                  example: "VendorJohn"
+                email:
+                  type: string
+                  example: "vendor@example.com"
+                role:
+                  type: string
+                  enum:
+                    - Admin
+                    - User
+                    - Vendor
+                  example: "Vendor"
+            products:
+              type: array
+              description: Populated product details with their store reference
+              items:
+                type: object
+                properties:
+                  _id:
+                    type: string
+                    example: "64prd001abc111"
+                  productName:
+                    type: string
+                    example: "Running Shoes"
+                  price:
+                    type: number
+                    example: 1299
+                  productDiscount:
+                    type: number
+                    example: 8
+                  quantity:
+                    type: integer
+                    example: 50
+                  productImageUrl:
+                    type: string
+                    example: "https://example.com/shoe.jpg"
+                  sellingPrice:
+                    type: number
+                    description: Virtual field — price after product and store discounts
+                    example: 1195.08
+                  store:
+                    type: object
+                    properties:
+                      _id:
+                        type: string
+                        example: "64str001abc111"
+                      storeName:
+                        type: string
+                        example: "SportZone"
+
+    StoreResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "SportZone Created by VendorJohn."
+        data:
+          type: object
+          properties:
+            store:
+              $ref: "#/components/schemas/Store"
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "Something went wrong."
+        data:
+          type: object
+          description: Additional error context (optional)
+
+  responses:
+    Unauthorized:
+      description: Missing or invalid JWT token
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            success: false
+            message: "Unauthorized. Token missing or invalid."
+
+    Forbidden:
+      description: Authenticated vendor does not own this store
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            success: false
+            message: "Unauthorized to access this store."
+
+    InternalServerError:
+      description: Unexpected server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            success: false
+            message: "Internal Server Error."

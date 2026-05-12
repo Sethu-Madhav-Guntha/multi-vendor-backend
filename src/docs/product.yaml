@@ -1,0 +1,538 @@
+tags:
+  - name: Products
+    description: Product endpoints. Create, update, and delete are restricted to authenticated vendors who own the store. Fetch endpoints are publicly accessible.
+
+paths:
+  /products/create:
+    post:
+      summary: Create a new product
+      description: >
+        Creates a new product and adds it to the specified store.
+        The authenticated vendor must be the **owner of the store** to add a product.
+        On success, the product is also pushed into the store's products array.
+      tags:
+        - Products
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProductRequest"
+            example:
+              storeId: "64str001abc111"
+              productName: "Running Shoes"
+              description: "Lightweight and comfortable running shoes"
+              price: 1299
+              quantity: 50
+              productDiscount: 8
+              productImageUrl: "https://example.com/shoe.jpg"
+      responses:
+        "201":
+          description: Product created and added to store successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductResponse"
+              example:
+                success: true
+                message: "Running Shoes Product added at SportZone by VendorJohn."
+                data:
+                  product:
+                    _id: "64prd001abc111"
+                    productName: "Running Shoes"
+                    description: "Lightweight and comfortable running shoes"
+                    price: 1299
+                    productDiscount: 8
+                    quantity: 50
+                    productImageUrl: "https://example.com/shoe.jpg"
+                    store: "64str001abc111"
+                    sellingPrice: 1195.08
+                    createdAt: "2024-01-01T10:00:00.000Z"
+                    updatedAt: "2024-01-01T10:00:00.000Z"
+        "403":
+          description: Vendor is not the owner of the specified store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                message: "Unauthorized to add product to SportZone store."
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /products/{productId}:
+    get:
+      summary: Get product by ID
+      description: Fetches a single product by its ID. Publicly accessible. Returns product details with populated store information.
+      tags:
+        - Products
+      parameters:
+        - in: path
+          name: productId
+          required: true
+          schema:
+            type: string
+          description: MongoDB ObjectId of the product
+          example: "64prd001abc111"
+      responses:
+        "200":
+          description: Product fetched successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Running Shoes Product Details Fetched."
+                  data:
+                    type: object
+                    properties:
+                      product:
+                        $ref: "#/components/schemas/PopulatedProduct"
+              example:
+                success: true
+                message: "Running Shoes Product Details Fetched."
+                data:
+                  product:
+                    _id: "64prd001abc111"
+                    productName: "Running Shoes"
+                    description: "Lightweight and comfortable running shoes"
+                    price: 1299
+                    productDiscount: 8
+                    quantity: 50
+                    productImageUrl: "https://example.com/shoe.jpg"
+                    sellingPrice: 1195.08
+                    store:
+                      _id: "64str001abc111"
+                      storeName: "SportZone"
+                      storeDiscount: 0
+                      storeImg: "https://example.com/store.jpg"
+                    createdAt: "2024-01-01T10:00:00.000Z"
+                    updatedAt: "2024-01-01T10:00:00.000Z"
+        "404":
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                message: "64prd001abc111 Product not found."
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    put:
+      summary: Update a product
+      description: >
+        Updates an existing product's details. Only accessible by the authenticated vendor who **owns the store** this product belongs to (verified by `verifyProductOwnership` middleware).
+        All fields are **optional** — only provided fields will be updated; others retain their existing values.
+      tags:
+        - Products
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: productId
+          required: true
+          schema:
+            type: string
+          description: MongoDB ObjectId of the product to update
+          example: "64prd001abc111"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProductRequest"
+            example:
+              productName: "Running Shoes Pro"
+              price: 1499
+              productDiscount: 10
+              quantity: 40
+      responses:
+        "200":
+          description: Product updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductResponse"
+              example:
+                success: true
+                message: "Running Shoes Pro Product Updated by VendorJohn."
+                data:
+                  product:
+                    _id: "64prd001abc111"
+                    productName: "Running Shoes Pro"
+                    description: "Lightweight and comfortable running shoes"
+                    price: 1499
+                    productDiscount: 10
+                    quantity: 40
+                    productImageUrl: "https://example.com/shoe.jpg"
+                    store: "64str001abc111"
+                    sellingPrice: 1349.1
+                    createdAt: "2024-01-01T10:00:00.000Z"
+                    updatedAt: "2024-01-02T10:00:00.000Z"
+        "403":
+          description: Vendor does not own this product's store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                message: "Unauthorized to update this product."
+        "404":
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                message: "64prd001abc111 Product not found."
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    delete:
+      summary: Delete a product
+      description: >
+        Permanently deletes a product. Only accessible by the authenticated vendor who **owns the store** this product belongs to (verified by `verifyProductOwnership` middleware).
+        On deletion:
+        - Product reference is removed from the store's products array.
+        - Product is removed from all customer carts automatically.
+        - Returns **204 No Content** on success.
+      tags:
+        - Products
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: productId
+          required: true
+          schema:
+            type: string
+          description: MongoDB ObjectId of the product to delete
+          example: "64prd001abc111"
+      responses:
+        "204":
+          description: Product deleted successfully. No content returned.
+        "403":
+          description: Vendor does not own this product's store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                message: "Unauthorized to delete this product."
+        "404":
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                message: "64prd001abc111 Product not found."
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /products:
+    get:
+      summary: List all products
+      description: >
+        Returns all products available in the system. Publicly accessible.
+        Each product is populated with its store details including the store owner.
+        The `sellingPrice` virtual field is included in each product — calculated as:
+        `price - (price × productDiscount%) - (price × storeDiscount%)`.
+      tags:
+        - Products
+      responses:
+        "200":
+          description: All products fetched successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "All Products Fetched."
+                  data:
+                    type: object
+                    properties:
+                      products:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/PopulatedProductWithOwner"
+              example:
+                success: true
+                message: "All Products Fetched."
+                data:
+                  products:
+                    - _id: "64prd001abc111"
+                      productName: "Running Shoes"
+                      description: "Lightweight and comfortable running shoes"
+                      price: 1299
+                      productDiscount: 8
+                      quantity: 50
+                      productImageUrl: "https://example.com/shoe.jpg"
+                      sellingPrice: 1195.08
+                      store:
+                        _id: "64str001abc111"
+                        storeName: "SportZone"
+                        storeDiscount: 0
+                        storeImg: "https://example.com/store.jpg"
+                        owner:
+                          _id: "64usr002abc222"
+                          username: "VendorJohn"
+                          email: "vendor@example.com"
+                      createdAt: "2024-01-01T10:00:00.000Z"
+                      updatedAt: "2024-01-01T10:00:00.000Z"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+components:
+  schemas:
+    CreateProductRequest:
+      type: object
+      required:
+        - storeId
+        - productName
+        - price
+        - quantity
+        - productDiscount
+      properties:
+        storeId:
+          type: string
+          description: MongoDB ObjectId of the store to add this product to. Vendor must own this store.
+          example: "64str001abc111"
+        productName:
+          type: string
+          description: Name of the product
+          example: "Running Shoes"
+        description:
+          type: string
+          description: Short description of the product (optional)
+          example: "Lightweight and comfortable running shoes"
+        price:
+          type: number
+          minimum: 0
+          description: Original price of the product
+          example: 1299
+        quantity:
+          type: integer
+          minimum: 0
+          description: Available stock quantity
+          example: 50
+        productDiscount:
+          type: number
+          minimum: 0
+          description: Discount percentage on the product (0 if no discount)
+          example: 8
+        productImageUrl:
+          type: string
+          description: URL of the product image. Defaults to a placeholder image if not provided or empty.
+          example: "https://example.com/shoe.jpg"
+
+    UpdateProductRequest:
+      type: object
+      description: All fields are optional. Only provided fields will be updated.
+      properties:
+        productName:
+          type: string
+          description: Updated product name
+          example: "Running Shoes Pro"
+        description:
+          type: string
+          description: Updated description
+          example: "Premium lightweight running shoes"
+        price:
+          type: number
+          minimum: 0
+          description: Updated original price
+          example: 1499
+        quantity:
+          type: integer
+          minimum: 0
+          description: Updated stock quantity
+          example: 40
+        productDiscount:
+          type: number
+          minimum: 0
+          description: Updated discount percentage
+          example: 10
+        productImageUrl:
+          type: string
+          description: Updated product image URL
+          example: "https://example.com/shoe-pro.jpg"
+
+    Product:
+      type: object
+      properties:
+        _id:
+          type: string
+          description: MongoDB ObjectId of the product
+          example: "64prd001abc111"
+        productName:
+          type: string
+          example: "Running Shoes"
+        description:
+          type: string
+          example: "Lightweight and comfortable running shoes"
+        price:
+          type: number
+          description: Original price before discounts
+          example: 1299
+        productDiscount:
+          type: number
+          description: Product-level discount percentage
+          example: 8
+        quantity:
+          type: integer
+          description: Available stock
+          example: 50
+        productImageUrl:
+          type: string
+          example: "https://example.com/shoe.jpg"
+        store:
+          type: string
+          description: MongoDB ObjectId referencing the Store
+          example: "64str001abc111"
+        sellingPrice:
+          type: number
+          description: >
+            Virtual field. Final price after applying both product discount and store discount.
+            Formula: price - (price × productDiscount%) - (price × storeDiscount%)
+          example: 1195.08
+        createdAt:
+          type: string
+          format: date-time
+          example: "2024-01-01T10:00:00.000Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2024-01-01T10:00:00.000Z"
+
+    PopulatedProduct:
+      allOf:
+        - $ref: "#/components/schemas/Product"
+        - type: object
+          properties:
+            store:
+              type: object
+              description: Populated store details
+              properties:
+                _id:
+                  type: string
+                  example: "64str001abc111"
+                storeName:
+                  type: string
+                  example: "SportZone"
+                storeDiscount:
+                  type: number
+                  description: Store-level discount percentage applied to all products
+                  example: 0
+                storeImg:
+                  type: string
+                  example: "https://example.com/store.jpg"
+
+    PopulatedProductWithOwner:
+      allOf:
+        - $ref: "#/components/schemas/Product"
+        - type: object
+          properties:
+            store:
+              type: object
+              description: Populated store with owner details
+              properties:
+                _id:
+                  type: string
+                  example: "64str001abc111"
+                storeName:
+                  type: string
+                  example: "SportZone"
+                storeDiscount:
+                  type: number
+                  example: 0
+                storeImg:
+                  type: string
+                  example: "https://example.com/store.jpg"
+                owner:
+                  type: object
+                  description: Populated store owner (vendor) details
+                  properties:
+                    _id:
+                      type: string
+                      example: "64usr002abc222"
+                    username:
+                      type: string
+                      example: "VendorJohn"
+                    email:
+                      type: string
+                      example: "vendor@example.com"
+
+    ProductResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Running Shoes Product added at SportZone by VendorJohn."
+        data:
+          type: object
+          properties:
+            product:
+              $ref: "#/components/schemas/Product"
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "Something went wrong."
+        data:
+          type: object
+          description: Additional error context (optional)
+
+  responses:
+    Unauthorized:
+      description: Missing or invalid JWT token
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            success: false
+            message: "Unauthorized. Token missing or invalid."
+
+    InternalServerError:
+      description: Unexpected server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            success: false
+            message: "Internal Server Error."
