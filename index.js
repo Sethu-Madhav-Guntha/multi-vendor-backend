@@ -13,13 +13,17 @@ import { isCustomer, isVendor } from "./src/middlewares/auth.middleware.js";
 import { swaggerSpec, swaggerUi } from "./src/config/swagger.js";
 
 const app = express();
-app.use(cors());
-app.use(express.json());
-app.use("/api-documentation", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 dotenv.config();
 connectDB();
 
 const PORT = process.env.PORT;
+
+app.use(cors({
+    origin: process.env.FRONTEND_BASE_URI,
+    credentials: true
+}));
+app.use(express.json());
+app.use("/api-documentation", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.use("/auth", authRouter);
 app.use("/stores", isVendor, storeRouter);

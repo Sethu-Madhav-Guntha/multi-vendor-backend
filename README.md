@@ -1,8 +1,11 @@
 # multi-vendor-backend
 Backend Application Code for Multi-Vendor Web Application.
+Implemnting Access and Refresh tokens.
+Current Version: 4.2.1
+------------------------------------------------------
 Implemented Swagger for API Documentation.
 On deleting Product, it removes the product at Cart too.
-Current Version: 4.2.0
+at this Version: 4.2.0
 ------------------------------------------------------
 Added start for executing application.
 Altered Cart Routes.

@@ -29,10 +29,16 @@ export const checkUserCredentials = async (email, password) => {
   return { status: "success", user };
 };
 
-export const tokenGeneration = (userId, role) => {
-  return jwt.sign(
+export const generateTokens = (userId, role) => {
+  const accessToken = jwt.sign(
     { userId, role },
-    process.env.JWT_SECRET,
+    process.env.JWT_ACCESS_SECRET,
+    { expiresIn: 300 });
+
+  const refreshToken = jwt.sign(
+    { userId, role },
+    process.env.JWT_REFRESH_SECRET,
     { expiresIn: "1h" }
   );
+  return { accessToken, refreshToken };
 }

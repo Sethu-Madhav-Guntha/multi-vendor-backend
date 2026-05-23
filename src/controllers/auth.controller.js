@@ -1,4 +1,4 @@
-import { registerUser, checkUserCredentials, tokenGeneration } from "../services/auth.services.js";
+import { registerUser, checkUserCredentials, generateTokens } from "../services/auth.services.js";
 import { sendResponse } from "../utils/response.js";
 
 export const loginUser = async (req, res, next) => {
@@ -14,10 +14,16 @@ export const loginUser = async (req, res, next) => {
             return sendResponse(res, 401, false, "Invalid Credentials. Please try again.", { prefillData: { email } })
         }
 
-        const token = tokenGeneration(user._id, user.role);
+        const { accessToken, refreshToken } = generateTokens(user._id, user.role);
+        res.cookie("refreshToken", refreshToken, {
+            httpOnly: true,
+            sameSite: "None",   // "None" + secure:true for prod
+            secure: true,     // true in HTTPS
+            maxAge: 60 * 60 * 1000 // 1 hour
+        });
         return sendResponse(res, 200, true, `${user.username} LoggedIn.`, {
             redirect: "/",
-            token,
+            accessToken,
             user: {
                 userId: user._id,
                 username: user.username,
@@ -44,10 +50,17 @@ export const signupUser = async (req, res, next) => {
         }
 
         if (status === "success") {
-            const token = tokenGeneration(user._id, user.role);
+            const { accessToken, refreshToken } = generateTokens(user._id, user.role);
+            res.cookie("refreshToken", refreshToken, {
+                httpOnly: true,
+                sameSite: "None",   // "None" + secure:true for prod
+                secure: true,     // true in HTTPS
+                maxAge: 60 * 60 * 1000 // 1 hour
+            });
+
             return sendResponse(res, 201, true, `${user.username} Registered as ${user.role}.`, {
                 redirect: "/",
-                token,
+                accessToken,
                 user: {
                     userId: user._id,
                     username: user.username,
@@ -66,6 +79,19 @@ export const signupUser = async (req, res, next) => {
 export const getUserDetails = async (req, res, next) => {
     try {
         return sendResponse(res, 200, true, `Fetched ${req.user.username} Details Successfully.`, { user: req.user });
+    } catch (err) {
+        next(err);
+    }
+}
+
+export const logoutUser = async (req, res, next) => {
+    try {
+        res.clearCookie("refreshToken", {
+            httpOnly: true,
+            sameSite: "None",
+            secure: true
+        });
+        return sendResponse(res, 200, true, "Logout Successful");
     } catch (err) {
         next(err);
     }
